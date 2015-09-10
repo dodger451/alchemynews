@@ -1,0 +1,48 @@
+language: php
+php:
+  - 5.4
+  - 5.5
+
+before_script:
+  ## Composer
+  - curl -s http://getcomposer.org/installer | php
+  - php composer.phar install --dev --no-interaction
+  ## PHP_CodeSniffer
+  - pear install pear/PHP_CodeSniffer
+  - phpenv rehash
+  ## PHP Mess Detector
+  - pear config-set preferred_state beta
+  - printf "\n" | pecl install imagick
+  - pear channel-discover pear.phpmd.org
+  - pear channel-discover pear.pdepend.org
+  - pear install --alldeps phpmd/PHP_PMD
+  - phpenv rehash
+  ## PHPLOC
+  - curl -o phploc.phar https://phar.phpunit.de/phploc.phar
+
+script:
+  ## PHP_CodeSniffer
+  - phpcs --report=emacs --standard=PSR2 . --ignore=vendor/*
+ ## PHP Mess Detector
+  - phpmd . text cleancode --exclude vendor
+  - phpmd . text codesize --exclude vendor
+  - phpmd . text controversial --exclude vendor
+  - phpmd . text design --exclude vendor
+  - phpmd . text naming --exclude vendor
+  - phpmd . text unusedcode --exclude vendor
+  ## PHPLOC
+  - php -d error_reporting=1 phploc.phar . --exclude vendor
+  ## PHPUNIT
+  - mkdir -p build/logs
+  - mkdir -p build/cov/
+  - phpunit -c phpunit.xml.dist
+  ## LINT
+  ##| grep -v 'No syntax errors detected'
+  - find ./src/ -type f -name \*.php -exec php -l {} \;
+
+after_script:
+  - php vendor/bin/coveralls
+  
+##notifications:
+##  email:
+##    david-testravis@latotzky.de
