@@ -55,4 +55,10 @@ $app->get('/db/', function () use ($app) {
     ));
 });
 
+$app->get('/demoapiread/', function () use ($app) {
+    $src = '../.data/api/response_fixture.json';
+    $response = json_decode(file_get_contents($src));
+    $app['monolog']->addDebug(print_r($response, true));
+    return print_r($response, true);
+});
 $app->run();
