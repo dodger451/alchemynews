@@ -60,14 +60,15 @@ $app->get('/demoapiread/', function () use ($app) {
     $response = json_decode(file_get_contents($src));
     if (!is_object($response) || 'OK' != $response->status) {
         $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
-        return 'something is worng: is_object='. is_object($response) ? 'true' : 'false';
+        return 'something is wrong: '. is_object($response) ? ('status=' . $response->status) : 'response not an object';
     }
     $docs = $response->result->docs;
+
     $app['monolog']->addDebug("Response status ok, results: " . count($docs));
     foreach ($docs as $doc) {
         $app['monolog']->addDebug($doc->id  . " - " .$doc->source->enriched->url->docSentiment->type  . ': ' . $doc->source->enriched->url->title);
     }
-    return '<pre>' . print_r($docs, true);
+    //return '<pre>' . print_r($docs, true);
     return $app['twig']->render('results.twig', array(
         'docs' => $docs
     ));
