@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <p>Got these rows from the database:</p>
+
+    <ul>
+        {% for d in docs %}
+            <li> {{ d.source.enriched.url.title }} </li>
+        {% else %}
+            <li>no results!</li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
