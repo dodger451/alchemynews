@@ -17,9 +17,10 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
-$app->register(new Herrera\Pdo\PdoServiceProvider(),
+$app->register(
+    new Herrera\Pdo\PdoServiceProvider(),
     array(
-        'pdo.dsn' => 'pgsql:dbname='.ltrim($dbopts["path"],'/').';host='.$dbopts["host"],
+        'pdo.dsn' => 'pgsql:dbname='.ltrim($dbopts["path"], '/').';host='.$dbopts["host"],
         'pdo.port' => $dbopts["port"],
         'pdo.username' => $dbopts["user"],
         'pdo.password' => $dbopts["pass"]
@@ -28,17 +29,17 @@ $app->register(new Herrera\Pdo\PdoServiceProvider(),
 
 // Our web handlers
 
-$app->get('/', function() use($app) {
-  $app['monolog']->addDebug('logging output.');
-  return $app['twig']->render('index.twig');
+$app->get('/', function () use ($app) {
+    $app['monolog']->addDebug('logging output.');
+    return $app['twig']->render('index.twig');
 });
 
-$app->get('/cowsay', function() use($app) {
+$app->get('/cowsay', function () use ($app) {
     $app['monolog']->addDebug('cowsay');
     return "<pre>".\League\Cowsayphp\Cow::say("Cool beans")."</pre>";
 });
 
-$app->get('/db/', function() use($app) {
+$app->get('/db/', function () use ($app) {
 
     $st = $app['pdo']->prepare('SELECT name FROM test_table');
     $st->execute();
