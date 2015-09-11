@@ -58,12 +58,11 @@ $app->get('/db/', function () use ($app) {
 $app->get('/demoapiread/', function () use ($app) {
     $src = '../data/api/response_fixture.json';
     $response = json_decode(file_get_contents($src));
-    if (!isset($response['status']) || 'ok' != $response['status']
-        || !isset($response['result'], $response['result']['docs']) || !is_array($response['result']['docs'])) {
-        $app['monolog']->addNotice('Response status not ok: ' . empty($response['status']) ? '' : $response['status']);
+    if (!is_object($response) || 'ok' != $response->status || !is_array($response->result->docs)) {
+        $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
         return '';
     }
-    $docs = $response['result']['docs'];
+    $docs = $response->result->docs;
     $app['monolog']->addDebug("Response status ok, results: " . count($docs));
     foreach ($docs as $doc) {
         $app['monolog']->addDebug($doc['id'] . " - " .$doc['source']['enriched']['url']['docSentiment']['type'] . ': ' . $doc['source']['enriched']['url']['title']);
@@ -71,7 +70,7 @@ $app->get('/demoapiread/', function () use ($app) {
     return $app['twig']->render('results.twig', array(
         'docs' => $docs
     ));
-    return '<pre>' . print_r($response, true);
+
 });
 
 $app->run();
