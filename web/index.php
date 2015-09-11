@@ -58,9 +58,9 @@ $app->get('/db/', function () use ($app) {
 $app->get('/demoapiread/', function () use ($app) {
     $src = '../data/api/response_fixture.json';
     $response = json_decode(file_get_contents($src));
-    if (!is_object($response) || 'ok' != $response->status || !is_array($response->result->docs)) {
+    if (!is_object($response) || 'ok' != $response->status) {
         $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
-        return '';
+        return 'something is worng: is_object='. is_object($response) ? 'true' : 'false';
     }
     $docs = $response->result->docs;
     $app['monolog']->addDebug("Response status ok, results: " . count($docs));
