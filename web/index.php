@@ -38,7 +38,7 @@ $app->get('/cowsay', function () use ($app) {
     $app['monolog']->addDebug('cowsay');
     return "<pre>".\League\Cowsayphp\Cow::say("Cool beans")."</pre>";
 });
-
+/*
 $app->get('/db/', function () use ($app) {
 
     $st = $app['pdo']->prepare('SELECT name FROM test_table');
@@ -53,13 +53,13 @@ $app->get('/db/', function () use ($app) {
     return $app['twig']->render('database.twig', array(
         'names' => $names
     ));
-});
+});*/
 
 $app->get('/demoapiread/', function () use ($app) {
-    $src = '../.data/api/response_fixture.json';
+    $src = '../data/api/response_fixture.json';
     $response = json_decode(file_get_contents($src));
     $app['monolog']->addDebug(print_r($response, true));
-    return print_r($response, true);
+    return '<pre>' . print_r($response, true);
 });
 
 $app->run();
