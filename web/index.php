@@ -14,7 +14,7 @@ $app->register(new Silex\Provider\MonologServiceProvider(), array(
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
     'twig.path' => __DIR__.'/../src/views',
 ));
-/*
+
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
 $app->register(
@@ -25,7 +25,7 @@ $app->register(
         'pdo.username' => $dbopts["user"],
         'pdo.password' => $dbopts["pass"]
     )
-);*/
+);
 
 // Our web handlers
 
@@ -38,7 +38,7 @@ $app->get('/cowsay', function () use ($app) {
     $app['monolog']->addDebug('cowsay');
     return "<pre>".\League\Cowsayphp\Cow::say("Cool beans")."</pre>";
 });
-/*
+
 $app->get('/db/', function () use ($app) {
 
     $st = $app['pdo']->prepare('SELECT name FROM test_table');
@@ -61,5 +61,5 @@ $app->get('/demoapiread/', function () use ($app) {
     $app['monolog']->addDebug(print_r($response, true));
     return print_r($response, true);
 });
-*/
+
 $app->run();
