@@ -58,15 +58,16 @@ $app->get('/db/', function () use ($app) {
 $app->get('/demoapiread/', function () use ($app) {
     $src = '../data/api/response_fixture.json';
     $response = json_decode(file_get_contents($src));
-    if (!is_object($response) || 'ok' != $response->status) {
+    if (!is_object($response) || 'OK' != $response->status) {
         $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
         return 'something is worng: is_object='. is_object($response) ? 'true' : 'false';
     }
     $docs = $response->result->docs;
     $app['monolog']->addDebug("Response status ok, results: " . count($docs));
     foreach ($docs as $doc) {
-        $app['monolog']->addDebug($doc['id'] . " - " .$doc['source']['enriched']['url']['docSentiment']['type'] . ': ' . $doc['source']['enriched']['url']['title']);
+        $app['monolog']->addDebug($doc->id  . " - " .$doc->source->enriched->url->docSentiment->type  . ': ' . $doc->source->enriched->url->title);
     }
+    return '<pre>' . print_r($docs, true);
     return $app['twig']->render('results.twig', array(
         'docs' => $docs
     ));
