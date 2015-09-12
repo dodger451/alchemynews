@@ -62,14 +62,14 @@ $app->get('/apiread/', function () use ($app) {
     $apikey = getenv('ALCHEMYAPI_KEY');
     $company = urlencode('Rocket Internet');
 
-    //$src = '../data/api/response_fixture.json';
-    $src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$apikey"
+    $src = '../data/api/response_fixture.json';
+    /*$src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$apikey"
         ."&return=enriched.url.title,enriched.url.url,enriched.url.publicationDate,enriched.url.docSentiment,enriched.url.concepts"
         ."&start=$start&end=$end"
         ."&q.enriched.url.entities.entity="
         ."|text=$company,type=company"
         ."|&count=50&outputMode=json";
-    $response = json_decode(file_get_contents($src));
+    */$response = json_decode(file_get_contents($src));
     if (!is_object($response) || 'OK' != $response->status) {
         $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
         var_dump($response);
