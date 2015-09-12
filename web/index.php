@@ -62,22 +62,21 @@ $app->get('/apiread/', function () use ($app) {
     $apikey = getenv('ALCHEMYAPI_KEY');
     $company = urlencode('Rocket Internet');
 
-    $src = '../data/api/response_fixture.json';
-    /*$src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$apikey"
-        ."&return=enriched.url.title,enriched.url.url,enriched.url.publicationDate,enriched.url.docSentiment,enriched.url.concepts"
+    //$src = '../data/api/response_fixture.json';
+    $src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$apikey"
+        ."&return=enriched.url.title,enriched.url.url,enriched.url.publicationDate,enriched.url.docSentiment"
+        .",enriched.url.concepts"
         ."&start=$start&end=$end"
         ."&q.enriched.url.entities.entity="
         ."|text=$company,type=company"
         ."|&count=50&outputMode=json";
-    */$response = json_decode(file_get_contents($src));
+    $response = json_decode(file_get_contents($src));
     if (!is_object($response) || 'OK' != $response->status) {
         $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
         var_dump($response);
         return ('something is wrong: ' .$response. print_r($response, true)) ;
     }
     $newdocs = $response->result->docs;
-    //add latest results to db
-
 
     $app['monolog']->addDebug("Response status ok, results: " . count($newdocs));
     echo("Response status ok, results: " . count($newdocs));
@@ -89,7 +88,7 @@ INSERT INTO news
 SELECT :alchemyid, :original_timestamp, :sentiment, :url, :title, :doc
 WHERE
     NOT EXISTS (
-        SELECT id FROM news WHERE alchemyid = :alchemyid
+        SELECT id FROM news WHERE alchemyid = :alchemyid or url = :url
         );
 SQL
         );
@@ -102,7 +101,10 @@ SQL
             'doc' => json_encode($doc),
         ];
         $res = $st->execute($data);
-        $app['monolog']->addDebug($doc->id  . " - " .$doc->source->enriched->url->docSentiment->type  . ': ' . $doc->source->enriched->url->title);
+        $app['monolog']->addDebug(
+            $doc->id  . " - " .$doc->source->enriched->url->docSentiment->type
+            . ': ' . $doc->source->enriched->url->title
+        );
     }
 
     //return '<pre>' . print_r($docs, true);
