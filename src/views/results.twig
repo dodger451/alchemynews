@@ -1,14 +1,30 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <p>Got these rows from the database:</p>
-
+    <h1>:)</h1>
     <ul>
         {% for d in docs %}
-            <li> {{ d.source.enriched.url.title }} </li>
-        {% else %}
-            <li>no results!</li>
+            {% if d.source.enriched.url.docSentiment.type == 'positive' %}
+                 <li> {{ d.timestamp|date("m/d/Y")  }} <a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a><br/>
+                     {% for c in d.source.enriched.url.concepts %}  | {{ c.text  }}{% endfor %}
+                 </li>
+            {% endif %}
         {% endfor %}
     </ul>
 
+    <h1>:|</h1>
+    <ul>
+        {% for d in docs %}
+            {% if d.source.enriched.url.docSentiment.type == 'neutral' %}
+                <li> <a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>    <h1>:(</h1>
+    <ul>
+        {% for d in docs %}
+            {% if d.source.enriched.url.docSentiment.type == 'negative' %}
+                <li> <a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
 {% endblock %}

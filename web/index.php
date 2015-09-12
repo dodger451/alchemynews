@@ -8,6 +8,7 @@ $app['debug'] = true;
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
   'monolog.logfile' => 'php://stderr',
+
 ));
 
 // Register view rendering
@@ -17,6 +18,14 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
+$dbopts = parse_url('postgres:///postgres');
+/*$dbopts["user"]='postgres';
+$dbopts["pass"]='postgres';
+$dbopts["path"]='alchemynews';
+$dbopts["host"]='localhost';
+$dbopts["port"]='5432';*/
+
+
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
     array(
@@ -30,47 +39,77 @@ $app->register(
 // Our web handlers
 
 $app->get('/', function () use ($app) {
-    $app['monolog']->addDebug('logging output.');
-    return $app['twig']->render('index.twig');
-});
-
-$app->get('/cowsay', function () use ($app) {
-    $app['monolog']->addDebug('cowsay');
-    return "<pre>".\League\Cowsayphp\Cow::say("Cool beans")."</pre>";
-});
-/*
-$app->get('/db/', function () use ($app) {
-
-    $st = $app['pdo']->prepare('SELECT name FROM test_table');
+    $st = $app['pdo']->prepare('SELECT * FROM news');
     $st->execute();
 
-    $names = array();
+    $docs = array();
     while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-        $app['monolog']->addDebug('Row ' . $row['name']);
-        $names[] = $row;
+        $app['monolog']->addDebug('Row ' . $row['url']);
+        $docs[] = json_decode($row['doc']);
     }
 
-    return $app['twig']->render('database.twig', array(
-        'names' => $names
-    ));
-});*/
-
-$app->get('/demoapiread/', function () use ($app) {
-    $src = '../data/api/response_fixture.json';
-    $response = json_decode(file_get_contents($src));
-    if (!is_object($response) || 'OK' != $response->status) {
-        $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
-        return 'something is wrong: '. is_object($response) ? ('status=' . $response->status) : 'response not an object';
-    }
-    $docs = $response->result->docs;
-
-    $app['monolog']->addDebug("Response status ok, results: " . count($docs));
-    foreach ($docs as $doc) {
-        $app['monolog']->addDebug($doc->id  . " - " .$doc->source->enriched->url->docSentiment->type  . ': ' . $doc->source->enriched->url->title);
-    }
     //return '<pre>' . print_r($docs, true);
     return $app['twig']->render('results.twig', array(
         'docs' => $docs
+    ));
+});
+
+
+$app->get('/apiread/', function () use ($app) {
+    // get latest api results
+    $start = time() - 60*60*24;
+    $end = time();
+
+    $apikey = getenv('ALCHEMYAPI_KEY');
+    $company = urlencode('Rocket Internet');
+
+    //$src = '../data/api/response_fixture.json';
+    $src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$apikey"
+        ."&return=enriched.url.title,enriched.url.url,enriched.url.publicationDate,enriched.url.docSentiment,enriched.url.concepts"
+        ."&start=$start&end=$end"
+        ."&q.enriched.url.entities.entity="
+        ."|text=$company,type=company"
+        ."|&count=50&outputMode=json";
+    $response = json_decode(file_get_contents($src));
+    if (!is_object($response) || 'OK' != $response->status) {
+        $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
+        var_dump($response);
+        return ('something is wrong: ' .$response. print_r($response, true)) ;
+    }
+    $newdocs = $response->result->docs;
+    //add latest results to db
+
+
+    $app['monolog']->addDebug("Response status ok, results: " . count($newdocs));
+    echo("Response status ok, results: " . count($newdocs));
+
+    foreach ($newdocs as $doc) {
+        $st = $app['pdo']->prepare(<<<SQL
+INSERT INTO news
+    (alchemyid, sentiment, url, title, doc)
+SELECT :alchemyid, :sentiment, :url, :title, :doc
+WHERE
+    NOT EXISTS (
+        SELECT id FROM news WHERE alchemyid = :alchemyid
+        );
+SQL
+        );
+        $data =  [
+            'alchemyid' => $doc->id,
+            'sentiment' => $doc->source->enriched->url->docSentiment->type,
+            'url' => $doc->source->enriched->url->url,
+            'title' => $doc->source->enriched->url->title,
+            'doc' => json_encode($doc),
+        ];
+        $res = $st->execute($data);
+        $app['monolog']->addDebug($doc->id  . " - " .$doc->source->enriched->url->docSentiment->type  . ': ' . $doc->source->enriched->url->title);
+    }
+
+
+
+    //return '<pre>' . print_r($docs, true);
+    return $app['twig']->render('results.twig', array(
+        'docs' => $newdocs
     ));
 
 });
