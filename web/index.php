@@ -18,7 +18,6 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
-$dbopts = parse_url('postgres:///postgres');
 /*$dbopts["user"]='postgres';
 $dbopts["pass"]='postgres';
 $dbopts["path"]='alchemynews';
