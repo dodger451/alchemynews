@@ -18,12 +18,13 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
-/*$dbopts["user"]='postgres';
+/*
+$dbopts["user"]='postgres';
 $dbopts["pass"]='postgres';
 $dbopts["path"]='alchemynews';
 $dbopts["host"]='localhost';
-$dbopts["port"]='5432';*/
-
+$dbopts["port"]='5432';
+*/
 
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
@@ -38,12 +39,11 @@ $app->register(
 // Our web handlers
 
 $app->get('/', function () use ($app) {
-    $st = $app['pdo']->prepare('SELECT * FROM news');
+    $st = $app['pdo']->prepare('SELECT * FROM news ORDER BY original_timestamp DESC');
     $st->execute();
 
     $docs = array();
     while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-        $app['monolog']->addDebug('Row ' . $row['url']);
         $docs[] = json_decode($row['doc']);
     }
 
@@ -56,7 +56,7 @@ $app->get('/', function () use ($app) {
 
 $app->get('/apiread/', function () use ($app) {
     // get latest api results
-    $start = time() - 60*60*24;
+    $start = time() - 60*60*24*2;
     $end = time();
 
     $apikey = getenv('ALCHEMYAPI_KEY');
@@ -85,8 +85,8 @@ $app->get('/apiread/', function () use ($app) {
     foreach ($newdocs as $doc) {
         $st = $app['pdo']->prepare(<<<SQL
 INSERT INTO news
-    (alchemyid, sentiment, url, title, doc)
-SELECT :alchemyid, :sentiment, :url, :title, :doc
+    (alchemyid, original_timestamp, sentiment, url, title, doc)
+SELECT :alchemyid, :original_timestamp, :sentiment, :url, :title, :doc
 WHERE
     NOT EXISTS (
         SELECT id FROM news WHERE alchemyid = :alchemyid
@@ -95,6 +95,7 @@ SQL
         );
         $data =  [
             'alchemyid' => $doc->id,
+            'original_timestamp' => date('Y-m-d G:i:s', $doc->timestamp),
             'sentiment' => $doc->source->enriched->url->docSentiment->type,
             'url' => $doc->source->enriched->url->url,
             'title' => $doc->source->enriched->url->title,
@@ -103,8 +104,6 @@ SQL
         $res = $st->execute($data);
         $app['monolog']->addDebug($doc->id  . " - " .$doc->source->enriched->url->docSentiment->type  . ': ' . $doc->source->enriched->url->title);
     }
-
-
 
     //return '<pre>' . print_r($docs, true);
     return $app['twig']->render('results.twig', array(
