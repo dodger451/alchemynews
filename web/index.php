@@ -4,11 +4,9 @@ require('../vendor/autoload.php');
 
 $app = new Silex\Application();
 $app['debug'] = true;
-
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
   'monolog.logfile' => 'php://stderr',
-
 ));
 
 // Register view rendering
@@ -35,45 +33,38 @@ $app->register(
         'pdo.password' => $dbopts["pass"]
     )
 );
+// Register NewsDb Service
+$app->register(new Latotzky\Alchemynews\NewsDbServiceProvider(), array());
+
+// Register the ALCHEMYAPI service
+$apikey = getenv('ALCHEMYAPI_KEY');
+$app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
+    'alchemynews.apikey' => $apikey,
+));
+
 
 // Our web handlers
-
 $app->get('/', function () use ($app) {
-    $st = $app['pdo']->prepare('SELECT * FROM news ORDER BY original_timestamp DESC');
-    $st->execute();
+    $docs = $app['newsdb']->getLatest();
 
-    $docs = array();
-    while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-        $docs[] = json_decode($row['doc']);
-    }
-
-    //return '<pre>' . print_r($docs, true);
-    return $app['twig']->render('results.twig', array(
-        'docs' => $docs
-    ));
+    return $app['twig']->render('results.twig', array('docs' => $docs));
 });
 
 
 $app->get('/apiread/', function () use ($app) {
     // get latest api results
-    $start = time() - 60*60*24*2;
+    $days = 2;
     $end = time();
-
-    $apikey = getenv('ALCHEMYAPI_KEY');
+    if (!empty($_GET['end']) && false !== strtotime($_GET['end'])) {
+        $end = strtotime($_GET['end']);
+    }
+    $start = $end - 60*60*24*$days;
     $company = urlencode('Rocket Internet');
 
-    //$src = '../data/api/response_fixture.json';
-    $src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$apikey"
-        ."&return=enriched.url.title,enriched.url.url,enriched.url.publicationDate,enriched.url.docSentiment"
-        .",enriched.url.concepts"
-        ."&start=$start&end=$end"
-        ."&q.enriched.url.entities.entity="
-        ."|text=$company,type=company"
-        ."|&count=50&outputMode=json";
-    $response = json_decode(file_get_contents($src));
+    $response = $app['alchemyapinews']->getCompanyNews($start, $end, $company);
+
     if (!is_object($response) || 'OK' != $response->status) {
         $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
-        var_dump($response);
         return ('something is wrong: ' .$response. print_r($response, true)) ;
     }
     $newdocs = $response->result->docs;
@@ -81,26 +72,10 @@ $app->get('/apiread/', function () use ($app) {
     $app['monolog']->addDebug("Response status ok, results: " . count($newdocs));
     echo("Response status ok, results: " . count($newdocs));
 
+
+
     foreach ($newdocs as $doc) {
-        $st = $app['pdo']->prepare(<<<SQL
-INSERT INTO news
-    (alchemyid, original_timestamp, sentiment, url, title, doc)
-SELECT :alchemyid, :original_timestamp, :sentiment, :url, :title, :doc
-WHERE
-    NOT EXISTS (
-        SELECT id FROM news WHERE alchemyid = :alchemyid or url = :url
-        );
-SQL
-        );
-        $data =  [
-            'alchemyid' => $doc->id,
-            'original_timestamp' => date('Y-m-d G:i:s', $doc->timestamp),
-            'sentiment' => $doc->source->enriched->url->docSentiment->type,
-            'url' => $doc->source->enriched->url->url,
-            'title' => $doc->source->enriched->url->title,
-            'doc' => json_encode($doc),
-        ];
-        $res = $st->execute($data);
+        $app['newsdb']->insertIfNotExists($doc);
         $app['monolog']->addDebug(
             $doc->id  . " - " .$doc->source->enriched->url->docSentiment->type
             . ': ' . $doc->source->enriched->url->title
