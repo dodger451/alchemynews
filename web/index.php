@@ -39,7 +39,7 @@ $app->register(new Latotzky\Alchemynews\NewsDbServiceProvider(), array());
 // Register the ALCHEMYAPI service
 $apikey = getenv('ALCHEMYAPI_KEY');
 $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
-    'alchemynews.apikey' => $apikey,
+    'alchemyapinews.apikey' => $apikey,
 ));
 
 
