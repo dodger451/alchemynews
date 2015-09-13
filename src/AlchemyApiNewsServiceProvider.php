@@ -37,7 +37,7 @@ class AlchemyApiNewsServiceProvider implements ServiceProviderInterface
 
         $app['alchemyapinews'] = $app->share(
             function (Application $app) {
-                foreach ($app['pdo.defaults'] as $name => $value) {
+                foreach ($app['alchemyapinews.defaults'] as $name => $value) {
                     if (!isset($app[$name])) {
                         $app[$name] = $value;
                     }
