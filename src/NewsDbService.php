@@ -68,4 +68,16 @@ SQL
         return $docs;
     }
 
+    function deleteBlacklisted($blacklist = array())
+    {
+        foreach ($blacklist as $black) {
+            $st = $this->pdo->prepare(<<<SQL
+DELETE FROM news WHERE url LIKE (:black)
+SQL
+            );
+            $st->execute(['black' => $black]);
+
+        }
+    }
+
 }

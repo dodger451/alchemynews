@@ -5,7 +5,7 @@
 
     <ul class="list-group">
         {% for d in docs %}
-            {% set item_css_class = '' %}
+            {% set item_css_class = 'list-group-item-info' %}
             {% if d.source.enriched.url.docSentiment.type == 'positive' %}
                 {% set item_css_class = 'list-group-item-success' %}
             {% endif %}
@@ -16,14 +16,14 @@
             {% set cur_date = d.timestamp|date("m/d/Y") %}
 
             {% if cur_date != last_date%}
-                <li class="list-group-item list-group-item-info">
-                    {{ cur_date }}
+                <li class="list-group-item ">
+                    <h2>{{ cur_date }}</h2>
                 </li>
             {% endif %}
 
             <li class="list-group-item {{ item_css_class }}">
-                <a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a>
-                <span class="badge">{{ d.source.enriched.url.docSentiment.score | round(2, 'ceil')  }}</span>
+                <span class="badge  pull-left" title="doc sentiment score">{{ d.source.enriched.url.docSentiment.score | round(2, 'ceil')  }}</span>
+                  &nbsp;<a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a>
                 <br/>
                 {% for c in d.source.enriched.url.concepts %}
                     <span class="label label-success">{{ c.text  }}</span>

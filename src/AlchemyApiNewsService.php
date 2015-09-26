@@ -33,7 +33,7 @@ class AlchemyApiNewsService
      */
     function getCompanyNews($start, $end, $company)
     {
-//$src = '../data/api/response_fixture.json';
+//$src = '../data/api/response_fixture.json';return json_decode(file_get_contents($src));
         $src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$this->apikey"
             . "&return=enriched.url.title,enriched.url.url,enriched.url.publicationDate,enriched.url.docSentiment"
             . ",enriched.url.concepts"

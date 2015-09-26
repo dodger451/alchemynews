@@ -72,6 +72,16 @@ $app->get('/apiread/', function () use ($app) {
     foreach ($newdocs as $doc) {
         $app['newsdb']->insertIfNotExists($doc);
     }
+    $app['newsdb']->deleteBlacklisted(
+        [
+            '%crunchbase%',
+            '%linkedin%',
+            '%techmoran.com%',
+            '%economictimes.indiatimes.com%',
+            '%www.scoop.it%',
+            '%techmeme.com%',
+        ]
+    );
 
     echo('<h2>' . count($newdocs) . ' results from alchemyapi</h2>');
 
