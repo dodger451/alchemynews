@@ -53,36 +53,28 @@ $app->get('/', function () use ($app) {
 
 $app->get('/apiread/', function () use ($app) {
     // get latest api results
+    $company = urlencode('Rocket Internet');
     $days = 2;
+
     $end = time();
     if (!empty($_GET['end']) && false !== strtotime($_GET['end'])) {
         $end = strtotime($_GET['end']);
     }
     $start = $end - 60*60*24*$days;
-    $company = urlencode('Rocket Internet');
-
     $response = $app['alchemyapinews']->getCompanyNews($start, $end, $company);
 
     if (!is_object($response) || 'OK' != $response->status) {
-        $app['monolog']->addNotice('Response not ok: ' . print_r($response, true));
+        echo ('Response not ok: ' . print_r($response, true));
         return ('something is wrong: ' .$response. print_r($response, true)) ;
     }
     $newdocs = $response->result->docs;
 
-    $app['monolog']->addDebug("Response status ok, results: " . count($newdocs));
-    echo("Response status ok, results: " . count($newdocs));
-
-
-
     foreach ($newdocs as $doc) {
         $app['newsdb']->insertIfNotExists($doc);
-        $app['monolog']->addDebug(
-            $doc->id  . " - " .$doc->source->enriched->url->docSentiment->type
-            . ': ' . $doc->source->enriched->url->title
-        );
     }
 
-    //return '<pre>' . print_r($docs, true);
+    echo('<h2>' . count($newdocs) . ' results from alchemyapi</h2>');
+
     return $app['twig']->render('results.twig', array(
         'docs' => $newdocs
     ));

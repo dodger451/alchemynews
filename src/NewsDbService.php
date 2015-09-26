@@ -55,7 +55,10 @@ SQL
      */
     function getLatest()
     {
-        $st = $this->pdo->prepare('SELECT * FROM news ORDER BY original_timestamp DESC');
+        $st = $this->pdo->prepare(<<<SQL
+SELECT * FROM news WHERE original_timestamp>now()- interval '30 day' ORDER BY original_timestamp DESC
+SQL
+);
         $st->execute();
 
         $docs = array();
