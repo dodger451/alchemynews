@@ -83,11 +83,7 @@ $app->get('/apiread/', function () use ($app) {
         ]
     );
 
-    echo('<h2>' . count($newdocs) . ' results from alchemyapi</h2>');
-
-    return $app['twig']->render('results.twig', array(
-        'docs' => $newdocs
-    ));
+    return count($newdocs);
 
 });
 

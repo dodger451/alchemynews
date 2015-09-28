@@ -47,7 +47,7 @@ SQL
             'title' => $doc->source->enriched->url->title,
             'doc' => json_encode($doc),
         ];
-        $res = $st->execute($data);
+        $st->execute($data);
     }
 
     /**
@@ -61,9 +61,19 @@ SQL
 );
         $st->execute();
 
+        $entityTypeHierarchy='/industries/media/internet/rocket internet';
         $docs = array();
         while ($row = $st->fetch(\PDO::FETCH_ASSOC)) {
-            $docs[] = json_decode($row['doc']);
+            $preparedDoc = json_decode($row['doc']);
+            $preparedDoc->extra->entity = null;
+            if (!empty($preparedDoc->source->enriched->url->entities)) {
+                foreach ($preparedDoc->source->enriched->url->entities as $entity) {
+                    if ($entity->knowledgeGraph->typeHierarchy == $entityTypeHierarchy) {
+                        $preparedDoc->extra->entity = $entity;
+                    }
+                }
+            }
+            $docs[] = $preparedDoc;
         }
         return $docs;
     }

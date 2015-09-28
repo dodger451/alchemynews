@@ -5,12 +5,15 @@
 
     <ul class="list-group">
         {% for d in docs %}
-            {% set item_css_class = 'list-group-item-info' %}
-            {% if d.source.enriched.url.docSentiment.type == 'positive' %}
-                {% set item_css_class = 'list-group-item-success' %}
-            {% endif %}
-            {% if d.source.enriched.url.docSentiment.type == 'negative' %}
-                {% set item_css_class = 'list-group-item-danger' %}
+            {% set item_css_class = 'disabled' %}
+
+            {% if d.extra.entity != null %}
+                {% set item_css_class = 'list-group-item-info' %}
+                {% if d.extra.entity.sentiment.type == 'positive' %}
+                    {% set item_css_class = 'list-group-item-success' %}
+                {% elseif d.extra.entity.sentiment.type == 'negative' %}
+                    {% set item_css_class = 'list-group-item-danger' %}
+                {% endif %}
             {% endif %}
 
             {% set cur_date = d.timestamp|date("m/d/Y") %}
@@ -22,11 +25,20 @@
             {% endif %}
 
             <li class="list-group-item {{ item_css_class }}">
-                <span class="badge  pull-left" title="doc sentiment score">{{ d.source.enriched.url.docSentiment.score | round(2, 'ceil')  }}</span>
-                  &nbsp;<a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a>
-                <br/>
+                {% if d.extra.entity != null %}
+                    <span class="badge  pull-left" title="sentiment score">{{ d.extra.entity.sentiment.score | round(2, 'ceil')  }}</span>
+                {% endif %}
+                &nbsp;<a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a>
+
+                {% if d.extra.entity != null %}
+                    <br />
+                    <div class="pull-left"> relevance: <span class="badge" title="relevance">{{ d.extra.entity.relevance | round(2, 'ceil')  }}</span></div>
+                    <div class="pull-left">&nbsp; count: <span class="badge" title="count">{{ d.extra.entity.count  }}</span></div>
+
+                {% endif %}
+                <br />
                 {% for c in d.source.enriched.url.concepts %}
-                    <span class="label label-success">{{ c.text  }}</span>
+                    <span class="label label-success"  title="relevance: {{ c.relevance | round(2, 'ceil') }}">{{ c.text  }}</span>
                 {% endfor %}
              </li>
 
