@@ -30,7 +30,7 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
 
-//$dbopts["user"]='postgres'; $dbopts["pass"]='postgres';$dbopts["path"]='alchemynews';$dbopts["host"]='localhost';$dbopts["port"]='5432';
+$dbopts["user"]='postgres'; $dbopts["pass"]='postgres';$dbopts["path"]='alchemynews';$dbopts["host"]='localhost';$dbopts["port"]='5432';
 
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
@@ -109,21 +109,26 @@ function extractConcepts(array $docs, $sort = 'count')
     foreach ($docs as $doc) {
         if (!empty($doc->source->enriched->url->concepts)) {
             foreach ($doc->source->enriched->url->concepts as $concept) {
-                if (!isset($concepts[$concept->knowledgeGraph->typeHierarchy])) {
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['count'] = 0;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] = 0;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['text'] = $concept->text;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['typeHierarchy'] =
-                        $concept->knowledgeGraph->typeHierarchy;
+                if (!empty($concept->knowledgeGraph->typeHierarchy)) {
+                    if (!isset($concepts[$concept->knowledgeGraph->typeHierarchy])) {
+                        $concepts[$concept->knowledgeGraph->typeHierarchy]['count'] = 0;
+                        $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] = 0;
+                        $concepts[$concept->knowledgeGraph->typeHierarchy]['text'] = $concept->text;
+                        $concepts[$concept->knowledgeGraph->typeHierarchy]['typeHierarchy'] =
+                            $concept->knowledgeGraph->typeHierarchy;
+                    }
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] += $concept->relevance;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['count']++;;
                 }
-                $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] += $concept->relevance;
-                $concepts[$concept->knowledgeGraph->typeHierarchy]['count']++;;
             }
         }
     }
     usort($concepts, function ($a, $b) use ($sort){
         if ($a[$sort] == $b[$sort]) {
-            return 0;
+            if ($a['relevance'] == $b['relevance']) {
+                return 0;
+            }
+            return ($a['relevance'] > $b['relevance']) ? -1 : 1;
         }
         return ($a[$sort] > $b[$sort]) ? -1 : 1;
     });
