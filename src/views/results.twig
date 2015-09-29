@@ -2,48 +2,96 @@
 
 {% block content %}
     {% set last_date = '' %}
-
-    <ul class="list-group">
-        {% for d in docs %}
-            {% set item_css_class = 'disabled' %}
-
-            {% if d.extra.entity != null %}
-                {% set item_css_class = 'list-group-item-info' %}
-                {% if d.extra.entity.sentiment.type == 'positive' %}
-                    {% set item_css_class = 'list-group-item-success' %}
-                {% elseif d.extra.entity.sentiment.type == 'negative' %}
-                    {% set item_css_class = 'list-group-item-danger' %}
-                {% endif %}
-            {% endif %}
-
-            {% set cur_date = d.timestamp|date("m/d/Y") %}
-
-            {% if cur_date != last_date%}
-                <li class="list-group-item ">
-                    <h2>{{ cur_date }}</h2>
-                </li>
-            {% endif %}
-
-            <li class="list-group-item {{ item_css_class }}">
-                {% if d.extra.entity != null %}
-                    <span class="badge  pull-left" title="sentiment score">{{ d.extra.entity.sentiment.score | round(2, 'ceil')  }}</span>
-                {% endif %}
-                &nbsp;<a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a>
+<div class="row">
+    <div class="col-lg-8">
+        <a id="news"></a>
+        <ul class="list-group">
+            {% for d in docs %}
+                {% set item_css_class = 'disabled' %}
+                {% set item_icon = '' %}
 
                 {% if d.extra.entity != null %}
-                    <br />
-                    <div class="pull-left"> relevance: <span class="badge" title="relevance">{{ d.extra.entity.relevance | round(2, 'ceil')  }}</span></div>
-                    <div class="pull-left">&nbsp; count: <span class="badge" title="count">{{ d.extra.entity.count  }}</span></div>
+                    {% set item_css_class = 'list-group-item-info' %}
+                    {% set item_icon = 'glyphicon glyphicon-hand-right' %}
 
+                    {% if d.extra.entity.sentiment.type == 'positive' %}
+                        {% set item_css_class = 'list-group-item-success' %}
+                        {% set item_icon = 'glyphicon glyphicon-thumbs-up' %}
+                    {% elseif d.extra.entity.sentiment.type == 'negative' %}
+                        {% set item_css_class = 'list-group-item-danger' %}
+                        {% set item_icon = 'glyphicon glyphicon-thumbs-down' %}
+                    {% endif %}
                 {% endif %}
-                <br />
-                {% for c in d.source.enriched.url.concepts %}
-                    <span class="label label-success"  title="relevance: {{ c.relevance | round(2, 'ceil') }}">{{ c.text  }}</span>
-                {% endfor %}
-             </li>
 
-            {% set last_date = cur_date  %}
+                {% set cur_date = d.timestamp|date("m/d/Y") %}
+
+                {% if cur_date != last_date%}
+                    <li class="list-group-item ">
+                        <div class="row">
+                            <div class="">
+                                <h2>{{ cur_date }}</h2>
+                            </div>
+                        </div>
+                    </li>
+                {% endif %}
+
+                <li class="list-group-item {{ item_css_class }}">
+                    <div class="row">
+                        <div class="">
+                            <span  class="h5 pull-left">{{ d.extra.domain }}
+                            {% if d.extra.entity != null %}
+                                <span class="{{ item_icon }} " aria-hidden="true"></span>
+                                <span class="label label-primary  " title="sentiment score">{{ d.extra.entity.sentiment.score | round(2, 'ceil')  }}</span>
+                            {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="">
+                            <a href="{{ d.source.enriched.url.url }}">{{ d.source.enriched.url.title }} </a>
+                        </div>
+                    </div>
+
+
+
+
+                    <div class="row">
+                        <div class="">
+
+                        {% for c in d.source.enriched.url.concepts %}
+                            <span class="label label-success"  title="relevance of this concept in this article: {{ c.relevance | round(2, 'ceil') }}">{{ c.text  }}</span>
+                        {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if d.extra.entity != null %}
+                        <div class="row">
+                            <div class="h6">
+                                <div class="pull-left"> relevance: <span class="label  label-default" title="Relevance of Rocket Internet in this article">{{ d.extra.entity.relevance | round(2, 'ceil')  }}</span></div>
+                                <div class="pull-left">&nbsp; count: <span class="label  label-default" title="Occurences of Rocket Internet">{{ d.extra.entity.count  }}</span></div>
+                            </div>
+                        </div>
+                    {% endif %}
+                 </li>
+
+                {% set last_date = cur_date  %}
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="col-lg-4">
+        <a id="concepts"></a>
+        <div>
+            <h3>Top 20 Concepts</h3>
+        </div>
+        <ul class="list-group">
+        {% for c in concepts %}
+            <li class="list-group-item ">
+                <span class="label label-success" title="relevance-sum over all articles: {{ c.relevance | round(2, 'ceil') }}">{{ c.text }}</span>
+                <span class="label label-default" title="Occurences of this concept in all articles">{{ c.count }}</span>
+            </li>
         {% endfor %}
-    </ul>
-
+        </ul>
+    </div>
+</div>
 {% endblock %}

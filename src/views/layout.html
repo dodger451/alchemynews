@@ -5,9 +5,12 @@
 </head>
 
 <body>
+<div class="container">
   {% include 'nav.html' %}
-  <h1>Rocket Internet in the News</h1>
-
+  <div class="page-header">
+    <h1>Rocket Internet in the News</h1>
+  </div>
   {% block content %}{% endblock %}
+</div>
 </body>
 </html>

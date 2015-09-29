@@ -16,13 +16,13 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
-/*
+
 $dbopts["user"]='postgres';
 $dbopts["pass"]='postgres';
 $dbopts["path"]='alchemynews';
 $dbopts["host"]='localhost';
 $dbopts["port"]='5432';
-*/
+
 
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
@@ -43,11 +43,48 @@ $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
 ));
 
 
+/**
+ * @param array $docs
+ * @param string $sort
+ * @return array
+ */
+function extractConcepts(array $docs, $sort = 'count')
+{
+    $concepts = array();
+    foreach ($docs as $doc) {
+        if (!empty($doc->source->enriched->url->concepts)) {
+            foreach ($doc->source->enriched->url->concepts as $concept) {
+                if (!isset($concepts[$concept->knowledgeGraph->typeHierarchy])) {
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['count'] = 0;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] = 0;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['text'] = $concept->text;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['typeHierarchy'] = $concept->knowledgeGraph->typeHierarchy;
+                }
+                $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] += $concept->relevance;
+                $concepts[$concept->knowledgeGraph->typeHierarchy]['count']++;;
+            }
+        }
+    }
+    usort($concepts, function ($a, $b) use ($sort){
+        if ($a[$sort] == $b[$sort]) {
+            return 0;
+        }
+        return ($a[$sort] > $b[$sort]) ? -1 : 1;
+    });
+
+    $concepts = array_slice($concepts, 0, 20);
+    return $concepts;
+}
+
 // Our web handlers
 $app->get('/', function () use ($app) {
     $docs = $app['newsdb']->getLatest();
 
-    return $app['twig']->render('results.twig', array('docs' => $docs));
+
+
+    $concepts = extractConcepts($docs);
+
+    return $app['twig']->render('results.twig', array('docs' => $docs, 'concepts' => $concepts));
 });
 
 
