@@ -16,13 +16,13 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
-
+/*
 $dbopts["user"]='postgres';
 $dbopts["pass"]='postgres';
 $dbopts["path"]='alchemynews';
 $dbopts["host"]='localhost';
 $dbopts["port"]='5432';
-
+*/
 
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
