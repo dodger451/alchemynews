@@ -4,7 +4,7 @@ require('../vendor/autoload.php');
 
 $app = new Silex\Application();
 // CONFIGURATION
-$app['companyname'] = 'Rocket Internet';
+$app['entityname'] = 'Rocket Internet';
 $app['entityTypeHierarchy'] = '/industries/media/internet/rocket internet';
 $app['blacklist'] = [
     '%crunchbase%',
@@ -62,7 +62,7 @@ $app->get('/', function () use ($app) {
 
     return $app['twig']->render(
         'results.twig',
-        array('docs' => $docs, 'concepts' => $concepts, 'entityname' => $app['companyname'])
+        array('docs' => $docs, 'concepts' => $concepts, 'entityname' => $app['entityname'])
     );
 });
 
@@ -72,7 +72,7 @@ $app->get('/', function () use ($app) {
  */
 $app->get('/apiread/', function () use ($app) {
     // get latest api results
-    $company = urlencode($app['companyname']);
+    $company = urlencode($app['entityname']);
     $days = 2;
 
     $end = time();
