@@ -15,7 +15,12 @@ $app['blacklist'] = [
     '%techmeme.com%',
 ];
 $app['debug'] = true;
+$apikey = getenv('ALCHEMYAPI_KEY');
+$dbopts = parse_url(getenv('DATABASE_URL'));
+if (empty($dbopts['path'])) {
+    $dbopts["user"]='postgres'; $dbopts["pass"]='postgres';$dbopts["path"]='alchemynews';$dbopts["host"]='localhost';$dbopts["port"]='5432';
 
+}
 // SERVICES
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
@@ -27,11 +32,7 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
     'twig.path' => __DIR__.'/../src/views',
 ));
 
-// add a PDO connection
-$dbopts = parse_url(getenv('DATABASE_URL'));
-
-$dbopts["user"]='postgres'; $dbopts["pass"]='postgres';$dbopts["path"]='alchemynews';$dbopts["host"]='localhost';$dbopts["port"]='5432';
-
+// register PDO connection
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
     array(
@@ -45,8 +46,8 @@ $app->register(
 $app->register(new Latotzky\Alchemynews\NewsDbServiceProvider(), array(
     'entityTypeHierarchy' => $app['entityTypeHierarchy']
 ));
+
 // Register the ALCHEMYAPI service
-$apikey = getenv('ALCHEMYAPI_KEY');
 $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
     'alchemyapinews.apikey' => $apikey,
 ));
@@ -58,7 +59,7 @@ $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
  */
 $app->get('/', function () use ($app) {
     $docs = $app['newsdb']->getLatest();
-    $concepts = extractConcepts($docs);
+    $concepts = extractConcepts($docs, 20);
 
     return $app['twig']->render(
         'results.twig',
@@ -101,24 +102,25 @@ $app->get('/apiread/', function () use ($app) {
 /**
  * @param array $docs
  * @param string $sort
+ * @param $limit
  * @return array
  */
-function extractConcepts(array $docs, $sort = 'count')
+function extractConcepts(array $docs, $sort = 'count', $limit = 20)
 {
     $concepts = array();
     foreach ($docs as $doc) {
         if (!empty($doc->source->enriched->url->concepts)) {
             foreach ($doc->source->enriched->url->concepts as $concept) {
                 if (!empty($concept->knowledgeGraph->typeHierarchy)) {
-                    if (!isset($concepts[$concept->knowledgeGraph->typeHierarchy])) {
-                        $concepts[$concept->knowledgeGraph->typeHierarchy]['count'] = 0;
-                        $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] = 0;
-                        $concepts[$concept->knowledgeGraph->typeHierarchy]['text'] = $concept->text;
-                        $concepts[$concept->knowledgeGraph->typeHierarchy]['typeHierarchy'] =
-                            $concept->knowledgeGraph->typeHierarchy;
+                    $id = $concept->knowledgeGraph->typeHierarchy;
+                    if (!isset($concepts[$id])) {
+                        $concepts[$id]['count'] = 0;
+                        $concepts[$id]['relevance'] = 0;
+                        $concepts[$id]['text'] = $concept->text;
+                        $concepts[$id]['typeHierarchy'] = $concept->knowledgeGraph->typeHierarchy;
                     }
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] += $concept->relevance;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['count']++;;
+                    $concepts[$id]['relevance'] += $concept->relevance;
+                    $concepts[$id]['count']++;;
                 }
             }
         }
@@ -133,7 +135,7 @@ function extractConcepts(array $docs, $sort = 'count')
         return ($a[$sort] > $b[$sort]) ? -1 : 1;
     });
 
-    $concepts = array_slice($concepts, 0, 20);
+    $concepts = array_slice($concepts, 0, $limit);
     return $concepts;
 }
 
