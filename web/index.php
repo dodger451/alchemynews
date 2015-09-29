@@ -59,7 +59,7 @@ $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
  */
 $app->get('/', function () use ($app) {
     $docs = $app['newsdb']->getLatest();
-    $concepts = extractConcepts($docs, 20);
+    $concepts = extractConcepts($docs);
 
     return $app['twig']->render(
         'results.twig',
