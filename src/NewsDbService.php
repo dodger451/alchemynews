@@ -61,20 +61,11 @@ SQL
 );
         $st->execute();
 
-        $entityTypeHierarchy='/industries/media/internet/rocket internet';
-        $entityTypeHierarchy=$this->options['entityTypeHierarchy'];
+        $entityTypeHierarchy = $this->options['entityTypeHierarchy'];
         $docs = array();
         while ($row = $st->fetch(\PDO::FETCH_ASSOC)) {
             $preparedDoc = json_decode($row['doc']);
-            $preparedDoc->extra->entity = null;
-            if (!empty($preparedDoc->source->enriched->url->entities)) {
-                foreach ($preparedDoc->source->enriched->url->entities as $entity) {
-                    if ($entity->knowledgeGraph->typeHierarchy == $entityTypeHierarchy) {
-                        $preparedDoc->extra->entity = $entity;
-                        break;
-                    }
-                }
-            }
+            $preparedDoc->extra->entity = $this->findEntityByTypeHierachy($preparedDoc, $entityTypeHierarchy);
             $preparedDoc->extra->domain = parse_url($preparedDoc->source->enriched->url->url, PHP_URL_HOST);
             $docs[] = $preparedDoc;
         }
@@ -91,6 +82,25 @@ SQL
             $st->execute(['black' => $black]);
 
         }
+    }
+
+    /**
+     * @param $preparedDoc
+     * @param $entityTypeHierarchy
+     * @return null
+     */
+    protected function findEntityByTypeHierachy($preparedDoc, $entityTypeHierarchy)
+    {
+        $entityObject = null;
+        if (!empty($preparedDoc->source->enriched->url->entities)) {
+            foreach ($preparedDoc->source->enriched->url->entities as $entity) {
+                if ($entity->knowledgeGraph->typeHierarchy == $entityTypeHierarchy) {
+                    $entityObject = $entity;
+                    break;
+                }
+            }
+        }
+        return $entityObject;
     }
 
 }
