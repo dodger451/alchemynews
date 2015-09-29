@@ -3,7 +3,20 @@
 require('../vendor/autoload.php');
 
 $app = new Silex\Application();
+// CONFIGURATION
+$app['companyname'] = 'Rocket Internet';
+$app['entityTypeHierarchy'] = '/industries/media/internet/rocket internet';
+$app['blacklist'] = [
+    '%crunchbase%',
+    '%linkedin%',
+    '%techmoran.com%',
+    '%economictimes.indiatimes.com%',
+    '%www.scoop.it%',
+    '%techmeme.com%',
+];
 $app['debug'] = true;
+
+// SERVICES
 // Register the monolog logging service
 $app->register(new Silex\Provider\MonologServiceProvider(), array(
   'monolog.logfile' => 'php://stderr',
@@ -16,13 +29,8 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // add a PDO connection
 $dbopts = parse_url(getenv('DATABASE_URL'));
-/*
-$dbopts["user"]='postgres';
-$dbopts["pass"]='postgres';
-$dbopts["path"]='alchemynews';
-$dbopts["host"]='localhost';
-$dbopts["port"]='5432';
-*/
+
+//$dbopts["user"]='postgres'; $dbopts["pass"]='postgres';$dbopts["path"]='alchemynews';$dbopts["host"]='localhost';$dbopts["port"]='5432';
 
 $app->register(
     new Herrera\Pdo\PdoServiceProvider(),
@@ -34,63 +42,37 @@ $app->register(
     )
 );
 // Register NewsDb Service
-$app->register(new Latotzky\Alchemynews\NewsDbServiceProvider(), array());
-
+$app->register(new Latotzky\Alchemynews\NewsDbServiceProvider(), array(
+    'entityTypeHierarchy' => $app['entityTypeHierarchy']
+));
 // Register the ALCHEMYAPI service
 $apikey = getenv('ALCHEMYAPI_KEY');
 $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
     'alchemyapinews.apikey' => $apikey,
 ));
 
-
+// ROUTES
 /**
- * @param array $docs
- * @param string $sort
- * @return array
+ * GET '/'
+ * Shows latest news.
  */
-function extractConcepts(array $docs, $sort = 'count')
-{
-    $concepts = array();
-    foreach ($docs as $doc) {
-        if (!empty($doc->source->enriched->url->concepts)) {
-            foreach ($doc->source->enriched->url->concepts as $concept) {
-                if (!isset($concepts[$concept->knowledgeGraph->typeHierarchy])) {
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['count'] = 0;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] = 0;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['text'] = $concept->text;
-                    $concepts[$concept->knowledgeGraph->typeHierarchy]['typeHierarchy'] = $concept->knowledgeGraph->typeHierarchy;
-                }
-                $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] += $concept->relevance;
-                $concepts[$concept->knowledgeGraph->typeHierarchy]['count']++;;
-            }
-        }
-    }
-    usort($concepts, function ($a, $b) use ($sort){
-        if ($a[$sort] == $b[$sort]) {
-            return 0;
-        }
-        return ($a[$sort] > $b[$sort]) ? -1 : 1;
-    });
-
-    $concepts = array_slice($concepts, 0, 20);
-    return $concepts;
-}
-
-// Our web handlers
 $app->get('/', function () use ($app) {
     $docs = $app['newsdb']->getLatest();
-
-
-
     $concepts = extractConcepts($docs);
 
-    return $app['twig']->render('results.twig', array('docs' => $docs, 'concepts' => $concepts));
+    return $app['twig']->render(
+        'results.twig',
+        array('docs' => $docs, 'concepts' => $concepts, 'entityname' => $app['companyname'])
+    );
 });
 
-
+/**
+ * GET '/apiread/'
+ * Reads news from alchemyapi to local db, removes blacklisted, PRint number of articles received from alchemyAPI.
+ */
 $app->get('/apiread/', function () use ($app) {
     // get latest api results
-    $company = urlencode('Rocket Internet');
+    $company = urlencode($app['companyname']);
     $days = 2;
 
     $end = time();
@@ -109,19 +91,46 @@ $app->get('/apiread/', function () use ($app) {
     foreach ($newdocs as $doc) {
         $app['newsdb']->insertIfNotExists($doc);
     }
-    $app['newsdb']->deleteBlacklisted(
-        [
-            '%crunchbase%',
-            '%linkedin%',
-            '%techmoran.com%',
-            '%economictimes.indiatimes.com%',
-            '%www.scoop.it%',
-            '%techmeme.com%',
-        ]
-    );
+    $app['newsdb']->deleteBlacklisted($app['blacklist']);
 
     return count($newdocs);
 
 });
 
+// HELPER
+/**
+ * @param array $docs
+ * @param string $sort
+ * @return array
+ */
+function extractConcepts(array $docs, $sort = 'count')
+{
+    $concepts = array();
+    foreach ($docs as $doc) {
+        if (!empty($doc->source->enriched->url->concepts)) {
+            foreach ($doc->source->enriched->url->concepts as $concept) {
+                if (!isset($concepts[$concept->knowledgeGraph->typeHierarchy])) {
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['count'] = 0;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] = 0;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['text'] = $concept->text;
+                    $concepts[$concept->knowledgeGraph->typeHierarchy]['typeHierarchy'] =
+                        $concept->knowledgeGraph->typeHierarchy;
+                }
+                $concepts[$concept->knowledgeGraph->typeHierarchy]['relevance'] += $concept->relevance;
+                $concepts[$concept->knowledgeGraph->typeHierarchy]['count']++;;
+            }
+        }
+    }
+    usort($concepts, function ($a, $b) use ($sort){
+        if ($a[$sort] == $b[$sort]) {
+            return 0;
+        }
+        return ($a[$sort] > $b[$sort]) ? -1 : 1;
+    });
+
+    $concepts = array_slice($concepts, 0, 20);
+    return $concepts;
+}
+
+// RUN APP
 $app->run();

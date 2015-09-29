@@ -2,6 +2,9 @@
 
 {% block content %}
     {% set last_date = '' %}
+<div class="page-header">
+    <h1>{{ entityname }} in the News <small>in the last 30 days</small></h1>
+</div>
 <div class="row">
     <div class="col-lg-8">
         <a id="news"></a>
@@ -25,6 +28,7 @@
 
                 {% set cur_date = d.timestamp|date("m/d/Y") %}
 
+
                 {% if cur_date != last_date%}
                     <li class="list-group-item ">
                         <div class="row">
@@ -38,12 +42,14 @@
                 <li class="list-group-item {{ item_css_class }}">
                     <div class="row">
                         <div class="">
-                            <span  class="h5 pull-left">{{ d.extra.domain }}
+                            <span  class="h5 pull-left">{{ d.extra.domain }}</span>
                             {% if d.extra.entity != null %}
-                                <span class="{{ item_icon }} " aria-hidden="true"></span>
-                                <span class="label label-primary  " title="sentiment score">{{ d.extra.entity.sentiment.score | round(2, 'ceil')  }}</span>
+                                <div class="pull-right">
+                                    <span class="label label-primary  " title="Sentiment of this article towards {{ entityname }}">{{ d.extra.entity.sentiment.score | round(2, 'ceil')  }}</span>
+                                    <span class="{{ item_icon }} " aria-hidden="true"></span>
+                                </div>
                             {% endif %}
-                            </span>
+
                         </div>
                     </div>
                     <div class="row">
@@ -59,7 +65,7 @@
                         <div class="">
 
                         {% for c in d.source.enriched.url.concepts %}
-                            <span class="label label-success"  title="relevance of this concept in this article: {{ c.relevance | round(2, 'ceil') }}">{{ c.text  }}</span>
+                            <span class="label label-success"  title="Relevance of this concept in this article: {{ c.relevance | round(2, 'ceil') }}">{{ c.text  }}</span>
                         {% endfor %}
                         </div>
                     </div>
@@ -67,8 +73,8 @@
                     {% if d.extra.entity != null %}
                         <div class="row">
                             <div class="h6">
-                                <div class="pull-left"> relevance: <span class="label  label-default" title="Relevance of Rocket Internet in this article">{{ d.extra.entity.relevance | round(2, 'ceil')  }}</span></div>
-                                <div class="pull-left">&nbsp; count: <span class="label  label-default" title="Occurences of Rocket Internet">{{ d.extra.entity.count  }}</span></div>
+                                <div class="pull-left"> relevance: <span class="label  label-default" title="Relevance of {{ entityname }} in this article">{{ d.extra.entity.relevance | round(2, 'ceil')  }}</span></div>
+                                <div class="pull-left">&nbsp; count: <span class="label  label-default" title="Occurences of {{ entityname }} in this article">{{ d.extra.entity.count  }}</span></div>
                             </div>
                         </div>
                     {% endif %}
@@ -81,13 +87,13 @@
 
     <div class="col-lg-4">
         <a id="concepts"></a>
-        <div>
-            <h3>Top 20 Concepts</h3>
+        <div class="h3">
+            Top 20 Concepts <small>by occurence</small>
         </div>
         <ul class="list-group">
         {% for c in concepts %}
             <li class="list-group-item ">
-                <span class="label label-success" title="relevance-sum over all articles: {{ c.relevance | round(2, 'ceil') }}">{{ c.text }}</span>
+                <span class="label label-success" title="Relevance-sum of this concept over all articles: {{ c.relevance | round(2, 'ceil') }}">{{ c.text }}</span>
                 <span class="label label-default" title="Occurences of this concept in all articles">{{ c.count }}</span>
             </li>
         {% endfor %}

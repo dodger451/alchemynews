@@ -62,6 +62,7 @@ SQL
         $st->execute();
 
         $entityTypeHierarchy='/industries/media/internet/rocket internet';
+        $entityTypeHierarchy=$this->options['entityTypeHierarchy'];
         $docs = array();
         while ($row = $st->fetch(\PDO::FETCH_ASSOC)) {
             $preparedDoc = json_decode($row['doc']);
