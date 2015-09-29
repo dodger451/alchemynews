@@ -71,7 +71,7 @@ SQL
                 foreach ($preparedDoc->source->enriched->url->entities as $entity) {
                     if ($entity->knowledgeGraph->typeHierarchy == $entityTypeHierarchy) {
                         $preparedDoc->extra->entity = $entity;
-
+                        break;
                     }
                 }
             }
