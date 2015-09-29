@@ -60,10 +60,11 @@ $app->register(new Latotzky\Alchemynews\AlchemyApiNewsServiceProvider(), array(
 $app->get('/', function () use ($app) {
     $docs = $app['newsdb']->getLatest();
     $concepts = extractConcepts($docs);
+    $chartData = getChartData($docs);
 
     return $app['twig']->render(
         'results.twig',
-        array('docs' => $docs, 'concepts' => $concepts, 'entityname' => $app['entityname'])
+        array('docs' => $docs, 'concepts' => $concepts, 'chartData' => json_encode($chartData), 'entityname' => $app['entityname'])
     );
 });
 
@@ -138,6 +139,62 @@ function extractConcepts(array $docs, $sort = 'count', $limit = 20)
     $concepts = array_slice($concepts, 0, $limit);
     return $concepts;
 }
+/**
+ * @param $docs
+ * @return array
+ */
+function getChartData($docs)
+{
+    $chartData = [
+        'labels' => [],
+        'datasets' => []
+    ];
 
+    $dataPerDay = array();
+    foreach ($docs as $doc) {
+        $doy = date('z', $doc->timestamp);
+        if (empty($dataPerDay[$doy])) {
+            $dataPerDay[$doy] = [
+                'label' => date('j. M.', $doc->timestamp),
+                'positive' => 0,
+                'neutral' => 0,
+                'negative' => 0
+            ];
+        }
+        if (!empty($doc->extra)) {
+            $dataPerDay[$doy][$doc->extra->entity->sentiment->type]++;
+        }
+    }
+    ksort($dataPerDay);
+    $positiveDataset = [//#DFF0D8
+        'data' => [],
+        'fillColor' => "rgba(223,240,216,0.5)",
+        'strokeColor' => "rgba(223,240,216,0.8)",
+        'highlightFill' => "rgba(223,240,216,0.75)",
+        'highlightStroke' => "rgba(223,240,216,1)"
+    ];
+    $neutralDataset = [//#D9EDF7
+        'data' => [],
+        'fillColor' => "rgba(217,237,247,0.5)",
+        'strokeColor' => "rgba(217,237,247,0.8)",
+        'highlightFill' => "rgba(217,237,247,0.75)",
+        'highlightStroke' => "rgba(217,237,247,1)"
+    ];
+    $negativeDataset = [// F2DEDE
+        'data' => [],
+        'fillColor' => "rgba(242,222,222,0.5)",
+        'strokeColor' => "rgba(242,222,222,0.8)",
+        'highlightFill' => "rgba(242,222,222,0.75)",
+        'highlightStroke' => "rgba(242,222,222,1)"
+    ];
+    foreach ($dataPerDay as $dataOfDay) {
+        $chartData['labels'][] = $dataOfDay['label'];
+        $positiveDataset['data'][] = $dataOfDay['positive'];
+        $neutralDataset['data'][] = $dataOfDay['neutral'];
+        $negativeDataset['data'][] = $dataOfDay['negative'];
+    }
+    $chartData['datasets'] = [$positiveDataset, $neutralDataset, $negativeDataset];
+    return $chartData;
+}
 // RUN APP
 $app->run();

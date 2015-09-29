@@ -6,7 +6,62 @@
 <div class="page-header">
     <h1>{{ entityname }} in the News <small>in the last 30 days</small></h1>
 </div>
-<div class="row">
+    <div>
+        <canvas id="myChart" width="1140" height="200"></canvas>
+    </div>
+
+<script  type="text/javascript">
+
+
+
+    var data = {{ chartData|raw }};
+
+    var options = {
+        //Boolean - Whether the scale should start at zero, or an order of magnitude down from the lowest value
+        scaleBeginAtZero : true,
+
+        //Boolean - Whether grid lines are shown across the chart
+        scaleShowGridLines : true,
+
+        //String - Colour of the grid lines
+        scaleGridLineColor : "rgba(0,0,0,.05)",
+
+        //Number - Width of the grid lines
+        scaleGridLineWidth : 1,
+
+        //Boolean - Whether to show horizontal lines (except X axis)
+        scaleShowHorizontalLines: true,
+
+        //Boolean - Whether to show vertical lines (except Y axis)
+        scaleShowVerticalLines: true,
+
+        //Boolean - If there is a stroke on each bar
+        barShowStroke : true,
+
+        //Number - Pixel width of the bar stroke
+        barStrokeWidth : 2,
+
+        //Number - Spacing between each of the X value sets
+        barValueSpacing : 5,
+
+        //Number - Spacing between data sets within X values
+        barDatasetSpacing : 1,
+
+        //String - A legend template
+        legendTemplate : "",
+
+        responsive: true
+
+    }
+
+
+    // Get the context of the canvas element we want to select
+    var ctx = document.getElementById("myChart").getContext("2d");
+    var myBarChart = new Chart(ctx).Bar(data, options);
+
+
+</script>
+    <div class="row">
     <div class="col-lg-8">
         <a id="news"></a>
         <ul class="list-group">
