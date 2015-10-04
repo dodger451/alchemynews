@@ -450,28 +450,6 @@
                                 {
                                     "count": 6,
                                     "disambiguated": {
-                                        "dbpedia": "http://dbpedia.org/resource/Rocket_Internet",
-                                        "geo": "",
-                                        "name": "Rocket Internet",
-                                        "subType": [],
-                                        "website": ""
-                                    },
-                                    "knowledgeGraph": {
-                                        "typeHierarchy": "/industries/media/internet/rocket internet"
-                                    },
-                                    "quotations": [],
-                                    "relevance": 0.599520981,
-                                    "sentiment": {
-                                        "mixed": 1,
-                                        "score": -0.128308997,
-                                        "type": "negative"
-                                    },
-                                    "text": "Rocket Internet",
-                                    "type": "Company"
-                                },
-                                {
-                                    "count": 6,
-                                    "disambiguated": {
                                         "dbpedia": "http://dbpedia.org/resource/Cambodia",
                                         "geo": "",
                                         "name": "Cambodia",

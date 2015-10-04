@@ -66,21 +66,6 @@
         <a id="news"></a>
         <ul class="list-group">
             {% for d in docs %}
-                {% set item_css_class = 'disabled' %}
-                {% set item_icon = '' %}
-
-                {% if d.extra.entity != null %}
-                    {% set item_css_class = 'list-group-item-info' %}
-                    {% set item_icon = 'glyphicon glyphicon-hand-right' %}
-
-                    {% if d.extra.entity.sentiment.type == 'positive' %}
-                        {% set item_css_class = 'list-group-item-success' %}
-                        {% set item_icon = 'glyphicon glyphicon-thumbs-up' %}
-                    {% elseif d.extra.entity.sentiment.type == 'negative' %}
-                        {% set item_css_class = 'list-group-item-danger' %}
-                        {% set item_icon = 'glyphicon glyphicon-thumbs-down' %}
-                    {% endif %}
-                {% endif %}
 
                 {% set cur_date = d.timestamp|date("m/d/Y") %}
 
@@ -95,14 +80,15 @@
                     </li>
                 {% endif %}
 
-                <li class="list-group-item {{ item_css_class }}">
+                <li class="list-group-item list-group-item-{{ d.extra.sentiment_class }}">
                     <div class="row">
                         <div class="">
                             <span  class="h4 pull-left">{{ d.extra.domain }}</span>
                             {% if d.extra.entity != null %}
                                 <div class="pull-right">
                                     <span class="label label-primary  " title="Sentiment of this article towards {{ entityname }}">{{ d.extra.entity.sentiment.score | round(2, 'ceil')  }}</span>
-                                    <span class="{{ item_icon }} " aria-hidden="true"></span>
+                                    <span class="glyphicon glyphicon-{{ d.extra.sentiment_icon }} " aria-hidden="true"></span>
+
                                 </div>
                             {% endif %}
 

@@ -156,13 +156,13 @@ function getChartData($docs)
         if (empty($dataPerDay[$doy])) {
             $dataPerDay[$doy] = [
                 'label' => date('j. M.', $doc->timestamp),
-                'positive' => 0,
-                'neutral' => 0,
-                'negative' => 0
+                'info' => 0,
+                'danger' => 0,
+                'success' => 0
             ];
         }
         if (!empty($doc->extra)) {
-            $dataPerDay[$doy][$doc->extra->entity->sentiment->type]++;
+            $dataPerDay[$doy][$doc->extra->sentiment_class]++;
         }
     }
     ksort($dataPerDay);
@@ -189,9 +189,9 @@ function getChartData($docs)
     ];
     foreach ($dataPerDay as $dataOfDay) {
         $chartData['labels'][] = $dataOfDay['label'];
-        $positiveDataset['data'][] = $dataOfDay['positive'];
-        $neutralDataset['data'][] = $dataOfDay['neutral'];
-        $negativeDataset['data'][] = $dataOfDay['negative'];
+        $positiveDataset['data'][] = $dataOfDay['success'];
+        $neutralDataset['data'][] = $dataOfDay['info'];
+        $negativeDataset['data'][] = $dataOfDay['danger'];
     }
     $chartData['datasets'] = [$positiveDataset, $neutralDataset, $negativeDataset];
     return $chartData;

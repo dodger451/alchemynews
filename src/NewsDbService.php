@@ -67,6 +67,23 @@ SQL
             $preparedDoc = json_decode($row['doc']);
             $preparedDoc->extra->entity = $this->findEntityByTypeHierachy($preparedDoc, $entityTypeHierarchy);
             $preparedDoc->extra->domain = parse_url($preparedDoc->source->enriched->url->url, PHP_URL_HOST);
+            $preparedDoc->extra->sentiment_class = ' disabled';
+            $preparedDoc->extra->sentiment_icon = '';
+            //if (null != $preparedDoc->extra->entity) $preparedDoc->extra->sentiment_class .= $preparedDoc->extra->entity->sentiment->type . ' mixed:"'.print_r($preparedDoc->extra->entity->sentiment->mixed, true).'"';
+            if (null != $preparedDoc->extra->entity) {
+                $preparedDoc->extra->sentiment_class = 'info';
+                $preparedDoc->extra->sentiment_icon = 'hand-right';
+
+                if (('1' != $preparedDoc->extra->entity->sentiment->mixed)) {
+                    if ('positive' == $preparedDoc->extra->entity->sentiment->type) {
+                        $preparedDoc->extra->sentiment_class = 'success';
+                        $preparedDoc->extra->sentiment_icon = 'hand-up';
+                    } elseif ('negative' == $preparedDoc->extra->entity->sentiment->type) {
+                        $preparedDoc->extra->sentiment_class = 'danger';
+                        $preparedDoc->extra->sentiment_icon = 'hand-down';
+                    }
+                }
+            }
             $docs[] = $preparedDoc;
         }
         return $docs;
