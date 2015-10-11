@@ -27,9 +27,9 @@ class NewsDbService
      * @param $app
      * @param $doc
      */
-    function insertIfNotExists( $doc)
+    public function insertIfNotExists($doc)
     {
-        $st = $this->pdo->prepare(<<<SQL
+        $stmt = $this->pdo->prepare(<<<SQL
 INSERT INTO news
     (alchemyid, original_timestamp, sentiment, url, title, doc)
 SELECT :alchemyid, :original_timestamp, :sentiment, :url, :title, :doc
@@ -47,29 +47,28 @@ SQL
             'title' => $doc->source->enriched->url->title,
             'doc' => json_encode($doc),
         ];
-        $st->execute($data);
+        $stmt->execute($data);
     }
 
     /**
      * @return array
      */
-    function getLatest()
+    public function getLatest()
     {
-        $st = $this->pdo->prepare(<<<SQL
+        $stmt = $this->pdo->prepare(<<<SQL
 SELECT * FROM news WHERE original_timestamp>now()- interval '30 day' ORDER BY original_timestamp DESC
 SQL
-);
-        $st->execute();
+        );
+        $stmt->execute();
 
         $entityTypeHierarchy = $this->options['entityTypeHierarchy'];
         $docs = array();
-        while ($row = $st->fetch(\PDO::FETCH_ASSOC)) {
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $preparedDoc = json_decode($row['doc']);
             $preparedDoc->extra->entity = $this->findEntityByTypeHierachy($preparedDoc, $entityTypeHierarchy);
             $preparedDoc->extra->domain = parse_url($preparedDoc->source->enriched->url->url, PHP_URL_HOST);
             $preparedDoc->extra->sentiment_class = ' disabled';
             $preparedDoc->extra->sentiment_icon = '';
-            //if (null != $preparedDoc->extra->entity) $preparedDoc->extra->sentiment_class .= $preparedDoc->extra->entity->sentiment->type . ' mixed:"'.print_r($preparedDoc->extra->entity->sentiment->mixed, true).'"';
             if (null != $preparedDoc->extra->entity) {
                 $preparedDoc->extra->sentiment_class = 'info';
                 $preparedDoc->extra->sentiment_icon = 'hand-right';
@@ -89,14 +88,14 @@ SQL
         return $docs;
     }
 
-    function deleteBlacklisted($blacklist = array())
+    public function deleteBlacklisted($blacklist = array())
     {
         foreach ($blacklist as $black) {
-            $st = $this->pdo->prepare(<<<SQL
+            $stmt = $this->pdo->prepare(<<<SQL
 DELETE FROM news WHERE url LIKE (:black)
 SQL
             );
-            $st->execute(['black' => $black]);
+            $stmt->execute(['black' => $black]);
 
         }
     }
@@ -119,5 +118,4 @@ SQL
         }
         return $entityObject;
     }
-
 }

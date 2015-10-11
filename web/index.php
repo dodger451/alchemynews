@@ -18,7 +18,11 @@ $app['debug'] = true;
 $apikey = getenv('ALCHEMYAPI_KEY');
 $dbopts = parse_url(getenv('DATABASE_URL'));
 if (empty($dbopts['path'])) {
-    $dbopts["user"]='postgres'; $dbopts["pass"]='postgres';$dbopts["path"]='alchemynews';$dbopts["host"]='localhost';$dbopts["port"]='5432';
+    $dbopts["user"]='postgres';
+    $dbopts["pass"]='postgres';
+    $dbopts["path"]='alchemynews';
+    $dbopts["host"]='localhost';
+    $dbopts["port"]='5432';
 
 }
 // SERVICES
@@ -64,7 +68,12 @@ $app->get('/', function () use ($app) {
 
     return $app['twig']->render(
         'results.twig',
-        array('docs' => $docs, 'concepts' => $concepts, 'chartData' => json_encode($chartData), 'entityname' => $app['entityname'])
+        array(
+            'docs' => $docs,
+            'concepts' => $concepts,
+            'chartData' => json_encode($chartData),
+            'entityname' => $app['entityname']
+        )
     );
 });
 
@@ -121,12 +130,13 @@ function extractConcepts(array $docs, $sort = 'count', $limit = 20)
                         $concepts[$id]['typeHierarchy'] = $concept->knowledgeGraph->typeHierarchy;
                     }
                     $concepts[$id]['relevance'] += $concept->relevance;
-                    $concepts[$id]['count']++;;
+                    $concepts[$id]['count']++;
+                    ;
                 }
             }
         }
     }
-    usort($concepts, function ($a, $b) use ($sort){
+    usort($concepts, function ($a, $b) use ($sort) {
         if ($a[$sort] == $b[$sort]) {
             if ($a['relevance'] == $b['relevance']) {
                 return 0;

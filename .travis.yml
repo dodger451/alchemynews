@@ -24,7 +24,7 @@ script:
   ## PHP_CodeSniffer
   - phpcs --report=emacs --standard=PSR2 . --ignore=vendor/*
  ## PHP Mess Detector
-  - phpmd . text cleancode --exclude vendor
+  #- phpmd . text cleancode --exclude vendor
   - phpmd . text codesize --exclude vendor
   - phpmd . text controversial --exclude vendor
   - phpmd . text design --exclude vendor
@@ -40,9 +40,8 @@ script:
   ##| grep -v 'No syntax errors detected'
   - find ./src/ -type f -name \*.php -exec php -l {} \;
 
-after_script:
-  - php vendor/bin/coveralls
-  
+#after_script:
+
 ##notifications:
 ##  email:
 ##    david-testravis@latotzky.de

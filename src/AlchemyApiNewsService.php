@@ -30,7 +30,7 @@ class AlchemyApiNewsService
      * @param string $company
      * @return mixed
      */
-    function getCompanyNews($start, $end, $company)
+    public function getCompanyNews($start, $end, $company)
     {
         //$src = '../data/api/response_fixture2.json';return json_decode(file_get_contents($src));
         $src = "https://access.alchemyapi.com/calls/data/GetNews?apikey=$this->apikey"
